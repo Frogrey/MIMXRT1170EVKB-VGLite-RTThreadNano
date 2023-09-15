@@ -35,7 +35,7 @@
 #include "vg_lite_kernel.h"
 
 #define VGLITE_MEM_ALIGNMENT    128
-#define TASK_LENGTH             8
+#define THREAD_LENGTH             8
 
 #ifdef __cplusplus
 extern "C" {

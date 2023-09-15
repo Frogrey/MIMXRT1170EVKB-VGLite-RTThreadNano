@@ -368,7 +368,7 @@ static vg_lite_error_t init_vglite(vg_lite_kernel_initialize_t * data)
 
     if((error = (vg_lite_error_t)VG_LITE_OS_LOCK()) == VG_LITE_SUCCESS){
         ++task_num;
-        for(semaphore_id = 0; semaphore_id < TASK_LENGTH ; semaphore_id++)
+        for(semaphore_id = 0; semaphore_id < THREAD_LENGTH ; semaphore_id++)
         {
             if (vg_lite_os_init_event(&context->async_event[0],
                                  semaphore_id,
@@ -388,7 +388,7 @@ static vg_lite_error_t init_vglite(vg_lite_kernel_initialize_t * data)
     else
         return error;
 
-    if(semaphore_id == TASK_LENGTH)
+    if(semaphore_id == THREAD_LENGTH)
         return VG_LITE_MULTI_THREAD_FAIL;
 
     /* Fill in hardware capabilities. */

@@ -171,7 +171,7 @@ static void redraw()
 
 uint32_t getTime()
 {
-    return (rt_tick_t)(1000 * rt_tick_get() / RT_TICK_PER_SECOND);
+    return (rt_tick_t)((rt_uint64_t)rt_tick_get() * 1000 / RT_TICK_PER_SECOND);
 }
 
 static void vglite_thread(void *parameter)

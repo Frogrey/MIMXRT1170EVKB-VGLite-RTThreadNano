@@ -17,15 +17,15 @@
 #if !defined(VG_DRIVER_SINGLE_THREAD)
 #define ISR_WAIT_TIME   0x1FFFF
 #define MAX_MUTEX_TIME  100
-#define TASK_WAIT_TIME  20
+#define THREAD_WAIT_TIME  20
 
 /* command queue task parameter */
-#define QUEUE_TASK_NAME     "queue_thread"
-#ifndef QUEUE_TASK_PRIO
-// #define QUEUE_TASK_PRIO  (configMAX_PRIORITIES - 1)
-#define QUEUE_TASK_PRIO     0
-#endif /* QUEUE_TASK_PRIO */
-#define QUEUE_TASK_SIZE  1024
+#define QUEUE_THREAD_NAME     "queue_thread"
+#ifndef QUEUE_THREAD_PRIO
+// #define QUEUE_THREAD_PRIO  (configMAX_PRIORITIES - 1)
+#define QUEUE_THREAD_PRIO     0
+#endif /* QUEUE_THREAD_PRIO */
+#define QUEUE_THREAD_SIZE  1024
 #define QUEUE_LENGTH     8
 #define MAX_QUEUE_WAIT_NUM  10
 /* The array stores one or more tlss, which is pointed by user_data of current thread. Set it to 1 when only vglite is used, otherwise set it to 2 if elementary is applied. */
@@ -57,7 +57,7 @@ vg_lite_os_t;
 static rt_mutex_t mutex;
 static vg_lite_os_t os_obj = {0};
 
-rt_sem_t semaphore[TASK_LENGTH] = {NULL};
+rt_sem_t semaphore[THREAD_LENGTH] = {NULL};
 rt_sem_t command_semaphore = NULL;
 uint32_t curContext;
 #endif /* not defined(VG_DRIVER_SINGLE_THREAD) */
@@ -96,7 +96,7 @@ void command_queue(void * parameters)
         if (rt_sem_take((rt_sem_t)command_semaphore, RT_WAITING_FOREVER) == RT_EOK) {
             if(os_obj.queue_handle->entry)
             {
-                ret = rt_mq_recv(os_obj.queue_handle, (void*) &peek_queue, os_obj.queue_handle->msg_size, (rt_int32_t) ((rt_int64_t)TASK_WAIT_TIME * RT_TICK_PER_SECOND / 1000));
+                ret = rt_mq_recv(os_obj.queue_handle, (void*) &peek_queue, os_obj.queue_handle->msg_size, (rt_int32_t) ((rt_int64_t)THREAD_WAIT_TIME * RT_TICK_PER_SECOND / 1000));
                 if(ret == RT_EOK)
                 {
 #if defined(PRINT_COMMAND_BUFFER)
@@ -258,11 +258,11 @@ int32_t vg_lite_os_initialize(void)
 
     if(task_number == 0)
     {
-        if(rt_mutex_take(mutex, (rt_int32_t) ((rt_int64_t)TASK_WAIT_TIME * RT_TICK_PER_SECOND / 1000)) == RT_EOK)
+        if(rt_mutex_take(mutex, (rt_int32_t) ((rt_int64_t)THREAD_WAIT_TIME * RT_TICK_PER_SECOND / 1000)) == RT_EOK)
         {
             if(os_obj.task_hanlde == NULL)
             {
-                os_obj.task_hanlde = rt_thread_create(QUEUE_TASK_NAME, command_queue, NULL, QUEUE_TASK_SIZE, QUEUE_TASK_PRIO, 1);
+                os_obj.task_hanlde = rt_thread_create(QUEUE_THREAD_NAME, command_queue, NULL, QUEUE_THREAD_SIZE, QUEUE_THREAD_PRIO, 1);
                 if(os_obj.task_hanlde == RT_NULL)
                 {
                     /* command queue task create fail */
@@ -331,7 +331,7 @@ int32_t vg_lite_os_submit(uint32_t context, uint32_t physical, uint32_t offset, 
     /* Current command buffer has been sent to the command queue. */
     event->signal = VG_LITE_IN_QUEUE;
 
-    if(rt_mq_send_wait(os_obj.queue_handle, (void *) &queue_node, os_obj.queue_handle->msg_size, ISR_WAIT_TIME * RT_TICK_PER_SECOND / 1000) != RT_EOK)
+    if(rt_mq_send_wait(os_obj.queue_handle, (void *) &queue_node, os_obj.queue_handle->msg_size, (rt_int32_t) ((rt_int64_t)ISR_WAIT_TIME * RT_TICK_PER_SECOND / 1000)) != RT_EOK)
         return VG_LITE_MULTI_THREAD_FAIL;
     curContext = context;
 
@@ -418,7 +418,7 @@ int32_t vg_lite_os_init_event(vg_lite_os_async_event_t *event,
                                       uint32_t semaphore_id,
                                       int32_t state)
 {
-    if (event->semaphore_id >= TASK_LENGTH)
+    if (event->semaphore_id >= THREAD_LENGTH)
         return VG_LITE_INVALID_ARGUMENT;
 
     if (semaphore[semaphore_id])
@@ -440,7 +440,7 @@ int32_t vg_lite_os_init_event(vg_lite_os_async_event_t *event,
 
 int32_t vg_lite_os_delete_event(vg_lite_os_async_event_t *event)
 {
-    if (event->semaphore_id >= TASK_LENGTH)
+    if (event->semaphore_id >= THREAD_LENGTH)
         return VG_LITE_INVALID_ARGUMENT;
 
     if (semaphore[event->semaphore_id]){
@@ -453,7 +453,7 @@ int32_t vg_lite_os_delete_event(vg_lite_os_async_event_t *event)
 
 int32_t vg_lite_os_wait_event(vg_lite_os_async_event_t *event)
 {
-    if (event->semaphore_id >= TASK_LENGTH)
+    if (event->semaphore_id >= THREAD_LENGTH)
         return VG_LITE_INVALID_ARGUMENT;
 
     if (rt_sem_take(semaphore[event->semaphore_id], RT_WAITING_FOREVER) != RT_EOK)
@@ -464,7 +464,7 @@ int32_t vg_lite_os_wait_event(vg_lite_os_async_event_t *event)
 
 int32_t vg_lite_os_signal_event(vg_lite_os_async_event_t *event)
 {
-    if (event->semaphore_id >= TASK_LENGTH)
+    if (event->semaphore_id >= THREAD_LENGTH)
         return VG_LITE_INVALID_ARGUMENT;
 
     rt_sem_release(semaphore[event->semaphore_id]);
