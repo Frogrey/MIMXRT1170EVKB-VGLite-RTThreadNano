@@ -15,3 +15,7 @@ The work including two parts: ported kernel and finsh console of RT-Thread Nano 
 ## How to Use
 
 Open /board/vglite_examples/xxx/iar/xxx.eww with IAR, make sure that the macro `DEMO_PANEL` in /board/display_support.h matches the displayer, then compile and run.
+
+## Tutorial
+* [./README/i.MX RT1170 VGLite移植RT-Thread Nano教程（上）.md](./README/i.MX%20RT1170%20VGLite移植RT-Thread%20Nano教程（上）.md)
+* [./README/i.MX RT1170 VGLite移植RT-Thread Nano教程（下）.md](./README/i.MX%20RT1170%20VGLite移植RT-Thread%20Nano教程（下）.md)
