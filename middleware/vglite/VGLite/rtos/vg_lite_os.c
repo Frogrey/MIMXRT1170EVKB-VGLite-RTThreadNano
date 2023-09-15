@@ -96,7 +96,7 @@ void command_queue(void * parameters)
         if (rt_sem_take((rt_sem_t)command_semaphore, RT_WAITING_FOREVER) == RT_EOK) {
             if(os_obj.queue_handle->entry)
             {
-                ret = rt_mq_recv(os_obj.queue_handle, (void*) &peek_queue, os_obj.queue_handle->msg_size, (rt_int32_t) (TASK_WAIT_TIME * RT_TICK_PER_SECOND / 1000));
+                ret = rt_mq_recv(os_obj.queue_handle, (void*) &peek_queue, os_obj.queue_handle->msg_size, (rt_int32_t) ((rt_int64_t)TASK_WAIT_TIME * RT_TICK_PER_SECOND / 1000));
                 if(ret == RT_EOK)
                 {
 #if defined(PRINT_COMMAND_BUFFER)
@@ -258,7 +258,7 @@ int32_t vg_lite_os_initialize(void)
 
     if(task_number == 0)
     {
-        if(rt_mutex_take(mutex, (rt_int32_t) (TASK_WAIT_TIME * RT_TICK_PER_SECOND / 1000)) == RT_EOK)
+        if(rt_mutex_take(mutex, (rt_int32_t) ((rt_int64_t)TASK_WAIT_TIME * RT_TICK_PER_SECOND / 1000)) == RT_EOK)
         {
             if(os_obj.task_hanlde == NULL)
             {
@@ -298,7 +298,7 @@ int32_t vg_lite_os_lock()
     if(mutex == NULL)
         return VG_LITE_NOT_SUPPORT;
 
-    if(rt_mutex_take(mutex, (rt_int32_t) (MAX_MUTEX_TIME * RT_TICK_PER_SECOND / 1000)) != RT_EOK)
+    if(rt_mutex_take(mutex, (rt_int32_t) ((rt_int64_t)MAX_MUTEX_TIME * RT_TICK_PER_SECOND / 1000)) != RT_EOK)
         return VG_LITE_MULTI_THREAD_FAIL;
 
     return VG_LITE_SUCCESS;
@@ -396,7 +396,7 @@ int32_t vg_lite_os_wait_interrupt(uint32_t timeout, uint32_t mask, uint32_t * va
     return 1;
 #else /*for rt500*/
     if(int_queue) {
-        if (rt_sem_take(int_queue, (rt_int32_t) (timeout * RT_TICK_PER_SECOND / 1000)) == RT_EOK) {
+        if (rt_sem_take(int_queue, (rt_int32_t) ((rt_int64_t)timeout * RT_TICK_PER_SECOND / 1000)) == RT_EOK) {
             if (value != NULL) {
                *value = int_flags & mask;
                 if (IS_AXI_BUS_ERR(*value))
