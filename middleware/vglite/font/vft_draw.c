@@ -35,7 +35,6 @@
 #include "vg_lite_text.h"
 #include "vft_draw.h"
 #include "vft_debug.h"
-// #include "FreeRTOS.h"
 
 #include "rtthread.h"
 

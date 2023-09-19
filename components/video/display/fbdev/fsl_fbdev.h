@@ -10,9 +10,6 @@
 
 #include "fsl_video_common.h"
 #include "fsl_dc_fb.h"
-// #include "FreeRTOS.h"
-// #include "semphr.h"
-
 #include "rtthread.h"
 
 /*

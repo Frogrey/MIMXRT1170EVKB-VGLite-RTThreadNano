@@ -31,16 +31,7 @@
 #include "vg_lite_os.h"
 
 #if !_BAREMETAL
-// #include "FreeRTOS.h"
-// #include "semphr.h"
-// #include "task.h"
 #include "rtthread.h"
-
-#if !defined(VG_DRIVER_SINGLE_THREAD)
-// #include "queue.h"
-#include "rtthread.h"
-
-#endif /* not defined(VG_DRIVER_SINGLE_THREAD) */
 #else
 #include "xil_cache.h"
 #endif

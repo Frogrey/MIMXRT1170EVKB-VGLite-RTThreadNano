@@ -1,13 +1,6 @@
 #include "vg_lite_os.h"
 
 #include "rtthread.h"
-
-// #include "FreeRTOS.h"
-// #include "semphr.h"
-#if !defined(VG_DRIVER_SINGLE_THREAD)
-// #include "task.h"
-// #include "queue.h"
-#endif /* not defined(VG_DRIVER_SINGLE_THREAD) */
 #include "vg_lite_hw.h"
 #include "vg_lite_hal.h"
 

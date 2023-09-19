@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-/* FreeRTOS kernel includes. */
+/* RT-Thread kernel includes. */
 #include "rtthread.h"
 #include "fsl_debug_console.h"
 #include "pin_mux.h"

@@ -6,8 +6,6 @@
  */
 
 #include "vglite_support.h"
-// #include "FreeRTOS.h"
-// #include "task.h"
 #include "vg_lite_platform.h"
 #include "vglite_window.h"
 

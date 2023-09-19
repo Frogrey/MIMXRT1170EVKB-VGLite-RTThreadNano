@@ -33,8 +33,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #include "FreeRTOS.h"
-
 #include "vg_lite.h"
 #include "Elm.h"
 #include "velm.h"

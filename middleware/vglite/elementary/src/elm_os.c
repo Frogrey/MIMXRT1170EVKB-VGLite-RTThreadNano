@@ -1,7 +1,4 @@
 #include "elm_os.h"
-// #include "FreeRTOS.h"
-// #include "task.h"
-
 #include "rtthread.h"
 
 vg_lite_error_t elm_os_set_tls(void* tls)

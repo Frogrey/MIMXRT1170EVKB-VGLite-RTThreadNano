@@ -5,12 +5,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-/* FreeRTOS kernel includes. */
+/* RT-Thread kernel includes. */
 #include "rtthread.h"
-
-// #include "FreeRTOS.h"
-// #include "task.h"
-
 
 /*-----------------------------------------------------------*/
 #include "vg_lite.h"

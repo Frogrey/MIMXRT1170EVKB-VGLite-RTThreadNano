@@ -53,7 +53,6 @@ extern "C" {
 #endif
 
 #if RTOS
-// #include "FreeRTOS.h"
 
 #include "rtthread.h"
 
