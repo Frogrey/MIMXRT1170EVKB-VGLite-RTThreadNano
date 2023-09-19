@@ -2,9 +2,9 @@
 
 ## Introduction
 
-VGLite examples from RT1170 EVKB SDK, in which FreeRTOS is replaced with RT-Thread Nano.
+VGLite examples from RT1170 EVKB SDK, in which FreeRTOS is replaced by RT-Thread Nano.
 
-The work including two parts: ported kernel and finsh console of RT-Thread Nano to RT1170, and replaced FreeRTOS API of VGLite and Elementary with RT-Thread API.
+The work includes two parts: porting kernel and finsh console of RT-Thread Nano to RT1170, and replacing FreeRTOS API of VGLite and Elementary with RT-Thread API.
 
 ## Environment
 
