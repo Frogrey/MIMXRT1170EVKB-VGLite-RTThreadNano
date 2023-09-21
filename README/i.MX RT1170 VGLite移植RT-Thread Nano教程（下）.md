@@ -1,6 +1,6 @@
 # i.MX RT1170：VGLite 移植 RT-Thread Nano 教程（下）
 
-上篇介绍了如何移植 RT-Thread Nano 内核与 Finsh 控制台到 i.MX RT1170 EVKB 开发板上。本篇继续介绍如何将 NXP 官方的 VGLite API 移植到 RT-Thread Nano 上。
+上篇介绍了如何移植 RT-Thread Nano 内核与 Finsh 控制台到 RT1170。本篇继续介绍如何将 NXP 官方的 VGLite API 移植到 RT-Thread Nano 上。
 
 ## RT-Thread 配置
 
@@ -24,7 +24,7 @@ rtconfig.h 可对 RT-Thread 配置，因 VGLite 会使用互斥量、消息队�
 #define RT_NAME_MAX    16
 ```
 
-原工程 FreeRTOS 设置 tick 频率为 200，RT-Thread Nano 默认的 tick 频率为 1000，可调整为 200 与原工程一致。
+原 FreeRTOS 工程 tick 频率为 200，RT-Thread Nano 默认 tick 频率为 1000，可与原工程保持一致。
 
 ``` C
 #define RT_TICK_PER_SECOND  200
@@ -32,11 +32,11 @@ rtconfig.h 可对 RT-Thread 配置，因 VGLite 会使用互斥量、消息队�
 
 ## FreeRTOS 与 RT-Thread 对比
 
-首先分析 FreeRTOS 与 RT-Thread 间的一些区别，以帮助后续用 RT-Thread API 改写 FreeRTOS API 。
+首先分析 FreeRTOS 与 RT-Thread 的一些区别，以加深读者理解，帮助后续用 RT-Thread API 改写 FreeRTOS API 。
 
 ### 任务与线程
 
-FreeRTOS 称线程为 “任务” （ task ），而RT-Thread直接称其为 “线程” （ thread ），这一术语尚未达成共识，两者只是同一事物的不同表述。
+FreeRTOS 称线程为 “任务” （ task ），而 RT-Thread 直接称为 “线程” （ thread ），这一术语尚未达成共识，两者只是同一事物的不同表述。
 
 ### 任务（线程）优先级
 
@@ -46,27 +46,27 @@ RT-Thread 中，优先级范围为 0 到 `RT_THREAD_PRIORITY_MAX - 1`，该宏�
 
 ### 任务（线程）调度
 
-FreeRTOS 中，需手动调用 `vTaskStartScheduler()` 开启全局任务调度器。任务一旦创建便直接参与调度运行。时间片轮转调度时，各相同优先级线程的单次运行时间片统一为 1，即 1 个 tick 便会调度一次。
+FreeRTOS 中，需手动调用 `vTaskStartScheduler()` 开启任务调度器。任务一旦创建便直接参与调度运行。时间片轮转调度时，各相同优先级线程的单次运行时间片统一为 1，即 1 个 tick 便调度一次。
 
-RT-Thread 中，系统初始化时就已自动调用 `rt_system_scheduler_init()` 与 `rt_system_scheduler_start()` ，无需手动开启任务调度器。但创建后的线程位于初始状态，初始状态的线程均需调用 `rt_thread_startup()` 才会参与调度运行。各线程的单次运行时间片在创建时可指定为不同 tick。
+RT-Thread 中，系统初始化时就已调用了 `rt_system_scheduler_start()` ，无需再手动开启。但创建后的线程尚位于初始状态，初始状态的线程均需调用 `rt_thread_startup()` 才会参与调度运行。各线程的单次运行时间片在创建时可指定为不同 tick。
 
 ### 中断适用函数
 
-FreeRTOS 中，涉及上下文切换的函数存在两个版本。一种是在任务中的常规版本；另一种则用于中断内调用，通常以 `FromISR()` 结尾。若中断调用的 API 唤醒了更高优先级的线程，会将输入的 `pxHigherPriorityTaskWoken` 变量赋值为 `pdTRUE` ，再手动调用 `portYIELD_FROM_ISR(xHigherPriorityTaskWoken)` 以此在中断退出时唤醒高优先级线程。
+FreeRTOS 中，涉及上下文切换的函数存在两个版本：一种是在任务中的常规版本；另一种则用于中断内调用，通常以 `FromISR()` 结尾。若中断调用的 API 唤醒了更高优先级的线程，需手动调用 `portYIELD_FROM_ISR(xHigherPriorityTaskWoken)` 以在中断退出时唤醒高优先级线程。
 
-RT-Thread 中，线程与中断可使用同一 API。但中断内不能使用挂起当前线程的操作，若使用则会打印 "Function [xxx_func] shall not used in ISR" 的提示信息。若中断内的函数唤醒了更高优先级的线程，则在中断退出会自动切换到高优先级线程，无需手动切换。
+RT-Thread 中，线程与中断可使用同一 API。但中断内不能使用挂起当前线程的操作，若使用则会打印 "Function [xxx_func] shall not used in ISR" 的提示信息。若中断内的函数唤醒了更高优先级的线程，则中断退出时会自动切换到高优先级线程，无需手动切换。
 
 ### 线程本地数据
 
 FreeRTOS 中，线程的本地数据为一个数组，长度由 FreeRTOSConfig.h 中的 `configNUM_THREAD_LOCAL_STORAGE_POINTERS` 宏设置。
 
-RT-Thread 中，线程的本地数据为一个 `uint32` 格式的 `user_data` 变量，而非数组。若要在本地存储数组、结构体等数据，可手动创建后将地址存入该变量。
+RT-Thread 中，线程的本地数据为一个 `uint32` 格式的 `user_data` 变量，而非数组。若要在线程本地存储数组、结构体等数据，可手动创建后将地址存入该变量。
 
 ### 信号量
 
-FreeRTOS 中，分为二值信号量与计数信号量。二值信号量最大值为 1 ，初值为 0 。每个计数信号量的最大值和初值均可在创建时指定。
+FreeRTOS 中，分为二值信号量与计数信号量。二值信号量最大值为 1 ，初值为 0 。计数信号量的最大值和初值均可在创建时分别指定。
 
-RT-Thread 中，未区分二值信号量与计数信号量，且仅能指定信号量初值，最大值统一为 65535 ，无法指定。此外，信号量在创建时可选先入先出模式（ `RT_IPC_FLAG_FIFO` ）和优先级模式（ `RT_IPC_FLAG_PRIO` ），通常选用优先级模式以保证线程实时性。
+RT-Thread 中，未区分二值或计数信号量，且仅能指定信号量初值，最大值无法指定，统一为 65535 。此外，信号量在创建时可选先入先出模式（ `RT_IPC_FLAG_FIFO` ）或优先级模式（ `RT_IPC_FLAG_PRIO` ），通常选用优先级模式以保证线程实时性。
 
 ### 互斥量
 
@@ -74,17 +74,11 @@ FreeRTOS 中，除创建的 API 以外，互斥量的结构体与持有、释放
 
 RT-Thread 中，互斥量拥有一套独立的 API ，而非与信号量共用 API 。
 
-### Tick
-
-FreeRTOS 中 `portTICK_PERIOD_MS` 宏 与 RT-Thread 中 `RT_TICK_PER_SECOND` 宏，名字相似但代表含义恰好相反，容易混淆。
-
-FreeRTOS 中 `portTICK_PERIOD_MS` 宏代表两个 ticks 间隔多少 ms；而 RT-Thread 中 `RT_TICK_PER_SECOND` 宏代表 tick 频率，与 FreeRTOS 中的 `configTICK_RATE_HZ` 相一致。
-
 ### 头文件
 
-FreeRTOS 中，当使用信号量、互斥量、队列等，除 FreeRTOS.h 外，需额外 include 其他对应的头文件。
+FreeRTOS 中，当使用信号量、互斥量、队列等，除 FreeRTOS.h 外，需额外包含其他对应的头文件。
 
-RT-Thread 中，通常仅需 include rtthread.h 即可使用信号量、互斥量、队列等。
+RT-Thread 中，通常仅需包含 rtthread.h 即可使用信号量、互斥量、队列等。
 
 ## VGLite 代码改写
 
@@ -109,11 +103,9 @@ RT-Thread 中，通常仅需 include rtthread.h 即可使用信号量、互斥�
 
 FreeRTOS 中的 `xTaskCreate()` 可由 RT-Thread 中的 `rt_thread_create()` 替换。注意两者优先级数字代表的高低相反，需转换。`rt_thread_create()` 中可指定线程单次运行的时间片，若 RT-Thread 已设置 tick 频率与原 FreeRTOS 相等，则时间片可全部设置为 1 。 `vTaskDelete(NULL)` 为删除当前线程，RT-Thread 可用 `rt_thread_delete(rt_thread_self())` 代替。 `TaskHandle_t` 结构体由 `rt_thread_t` 代替。
 
-而原有的 `vTaskStartScheduler()` 应删除，改用 `rt_thread_startup()` 启动指定线程。
+而原有的 `vTaskStartScheduler()` 应删除，改用 `rt_thread_startup()` 启动指定线程。此外，命名中的 "task" 可替换为 "thread" 以符合 RT-Thread 规范。
 
-此外，命名中的 "task" 可替换为 "thread" 以符合 RT-Thread 规范。
-
-/source/clock_rtthread.c 的线程相关代码对比主要如下：（篇幅所限，仅列举代表性的例子，下同）
+/source/clock_rtthread.c 的线程相关代码对比主要如下：（篇幅所限，仅以有代表性的文件与函数为例，其他未列出的文件和函数可根据例子参考，对编译错误信息位置改写，下同）
 
 ``` C
 xTaskCreate(vglite_task, "vglite_task", configMINIMAL_STACK_SIZE + 200, NULL, configMAX_PRIORITIES - 1, NULL)
@@ -151,7 +143,7 @@ if (os_obj.task_hanlde != RT_NULL)
 
 原 `xSemaphoreCreateCounting()` 与 `xSemaphoreCreateBinary()` 均可使用 `rt_sem_create()` 代替，`rt_sem_create()` 需设置名称，无需设置最大值，初值通常为 0，排队方式一般采用 `RT_IPC_FLAG_PRIO` ，下同。 `SemaphoreHandle_t` 结构体换为 `rt_sem_t` 。
 
-`xSemaphoreTake()` 可替换为 `rt_sem_take()`，FreeRTOS 中的 `portMAX_DELAY` 代表无限等待，可换为 Rt-Thread 的 `RT_WAITING_FOREVER` 。若原 FreeRTOS 中指定过期 tick 形如 `timeout / portTICK_PERIOD_MS`，应使用 `(rt_int32)((rt_int64)timeout * RT_TICK_PER_SECOND / 1000)` 替换。
+`xSemaphoreTake()` 可替换为 `rt_sem_take()`，FreeRTOS 中 `portMAX_DELAY` 代表无限等待，可换为 RT-Thread 的 `RT_WAITING_FOREVER` 。若原 FreeRTOS 中指定过期 tick 形如 `timeout / portTICK_PERIOD_MS`，应使用 `(rt_int32)((rt_int64)timeout * RT_TICK_PER_SECOND / 1000)` 替换。
 
 判断返回值由 `pdTRUE` 替换为 `RT_EOK` 。 `xSemaphoreGive()`换为 `rt_sem_release()` 。 `vSemaphoreDelete()` 使用 `rt_sem_delete()` 替换。有关信号量的中断内函数 `xSemaphoreGiveFromISR()` 在下文再详细讲解。
 
@@ -173,11 +165,13 @@ if (xSemaphoreTake(int_queue, timeout / portTICK_PERIOD_MS) == pdTRUE)
 if (rt_sem_take(int_queue, (rt_int32_t) ((rt_int64_t)timeout * RT_TICK_PER_SECOND / 1000)) == RT_EOK)
 ```
 
+<!--
 以下文件同样需改写信号量相关函数与结构体，均可参考以上例子：
 
 * /video/fsl_fbdev.h
 * /video/fsl_fbdev.c
 * /vglite/VGLiteKernel/rtos/vg_lite_hal.c
+-->
 
 ### 互斥量 API 改写
 
@@ -244,21 +238,28 @@ if(xHigherPriorityTaskWoken != pdFALSE )
 rt_sem_release(int_queue);
 ```
 
-/video/fsl_fbdev.c 文件同样需改写信号量相关函数与结构体，可参考以上例子。
+<!--
+/video/fsl_fbdev.c 文件同样需改写信号量在中断中的函数与结构体，可参考以上例子。
+-->
 
 ### 内存管理 API 改写
 
-`pvPortMalloc()` 代替为 `rt_malloc()` ，`vPortFree()` 代替为 `rt_free()` 即可。以下文件需改写内存管理相关函数：
+`pvPortMalloc()` 代替为 `rt_malloc()` ，`vPortFree()` 代替为 `rt_free()` 即可。
 
+<!--
+以下文件需改写内存管理相关函数：
 * /vglite/VGLite/rtos/vg_lite_os.c
 * /vglite/font/vft_draw.c
 * /elementary/src/velm.h
+-->
 
 ### 临界区资源 API 改写
 
 `portENTER_CRITICAL()` 与 `portEXIT_CRITICAL()` 需替换为 `rt_enter_critical()` 与 `rt_exit_critical()` 。 
 
-/video/fsl_fbdev.c 文件需对临界区资源相关函数进行改写：
+<!--
+/video/fsl_fbdev.c 文件需对临界区资源相关函数进行改写。
+-->
 
 ### 时间相关 API 改写
 
@@ -280,11 +281,12 @@ vTaskDelay((configTICK_RATE_HZ * msec + 999)/ 1000);
 rt_thread_mdelay(msec);
 ```
 
+<!--
 以下文件也需对延时相关函数进行改写，均可参考以上例子：
-
 * /video/fsl_dc_fb_lcdifv2.c
 * /video/fsl_video_common.c
 * /utilities/fsl_debug_console.c
+-->
 
 ### 线程本地数据 API 改写
 
@@ -348,11 +350,14 @@ void vg_lite_os_reset_tls() {
 
 ### 数据类型改写
 
-FreeRTOS 定义了 `TickType_t` 与 `BaseType_t` 类型，在 RT1170 中可分别用 `rt_uint32_t` 与 `rt_err_t` 代替。同时，可用 `RT_NULL` 代替 `NULL` 判断 RT-Thread 对象是否为空。以下文件需对数据类型进行改写：
+FreeRTOS 定义了 `TickType_t` 与 `BaseType_t` 类型，在 RT1170 中可分别用 `rt_uint32_t` 与 `rt_err_t` 代替。同时，可用 `RT_NULL` 代替 `NULL` 判断 RT-Thread 对象是否为空。
 
+<!--
+以下文件需对数据类型进行改写：
 * /vglite/VGLite/rtos/vg_lite_os.c
 * /video/fsl_fbdev.c （在中断函数中因不再需要手动切换上下文，也可直接删除 `BaseType_t` 变量）
 * /video/fsl_video_common.c （若用于延时指定毫秒，也可直接删除转换毫秒为 tick 的 `TickType_t` 变量与计算过程，直接使用 `rt_thread_mdelay()` 代替）
+-->
 
 ### 输出 API 改写
 
@@ -360,9 +365,7 @@ FreeRTOS 定义了 `TickType_t` 与 `BaseType_t` 类型，在 RT1170 中可分�
 
 ## 结果验证
 
-编译并运行，若屏幕出现指针不断旋转的时钟，且串口会打印帧数。恭喜， VGLite 与 Elementary 已成功移植到 RT-Thread Nano 上！
-
-![屏幕时钟](./images/屏幕时钟.png)
+编译并运行，若与上篇的原工程结果相同，即屏幕出现指针不断旋转的时钟，且串口打印帧数信息。恭喜， VGLite 与 Elementary 已成功移植到 RT-Thread Nano 上！
 
 ## 总结
 

@@ -2,19 +2,15 @@
 
 RT-Thread 是国人自主研发的开源实时操作系统（ RTOS ），RT-Thread Nano 是极简版的硬实时内核，内存占用小，移植简单。VGLite 是 NXP 提供的轻量级 2D 图形 API，基于 FreeRTOS 实现。
 
-文章分为上、下两篇，将手把手教您移植 VGLite 到 RT-Thread Nano。上篇对 RT-Thread Nano 内核与 Finsh 组件进行移植，下篇则教您如何改写官方 SDK 中 VGLite example 的代码，使其从原有的 FreeRTOS 适配到 RT-Thread Nano 中。
+文章分为上、下两篇，将手把手教您移植。上篇对 RT-Thread Nano 内核与 Finsh 组件进行移植，下篇则教您改写 SDK 中的 VGLite 代码以将其适配到 RT-Thread Nano 中。
 
-文章所做的工作已上传至 [Github](https://github.com/Frogrey/MIMXRT1170EVKB-VGLite-RTThreadNano.git) ，欢迎有兴趣的读者学习交流！
+所有工作已上传至 [Github](https://github.com/Frogrey/MIMXRT1170EVKB-VGLite-RTThreadNano.git) ，欢迎有兴趣的读者学习交流！
 
 ## 硬件准备
 
-本文采用 i.MX RT1170 EVKB 开发板与 RK055HDMIPI4M 显示屏，显示屏与开发板 J48 相连，使用 MIPI DSI 协议通信，连接方式如图。
+本文采用 i.MX RT1170 EVKB 开发板与 RK055HDMIPI4M 显示屏，显示屏与开发板 *J48* 相连，使用 MIPI DSI 协议通信。连接 5V 输入到开发板 *J43，* 跳线连接 *J38* 的 1-2，电源开关为 *SW5* ，Debug 时使用 Micro-USB 数据线连接 PC 与开发板的 *J86* 。总体连接图如下。
 
-![显示屏与开发板连接图](./images/显示屏与开发板连接图.png)
-
-连接 5V 输入到开发板 J43， 跳线连接 J38 的 1-2，电源开关为 SW5，Debug 时使用 Micro-USB 数据线连接电脑与开发板的 J86。整体连接图如下。
-
-![整体连接图](./images/总体连接图.png)
+![整体连接图](./images/总体连接图.png) ![显示屏与开发板连接图](./images/显示屏与开发板连接图.png)
 
 ## 软件准备
 
@@ -50,7 +46,7 @@ NOTE: 本文中使用的 SDK 版本为 v2.14.0，RT-Thread Nano 为 v3.1.3，IAR
 #include "queue.h"
 ```
 
-因原有的 VGLite 源文件仍在调用移除的 FreeRTOS 函数，会导致编译报错。可先右键以下文件后点击 Options... 选项，选择 Exclude from build 排除编译。
+因原有的 VGLite 源文件仍会调用已移除的 FreeRTOS 函数，会导致编译报错。可先右键以下文件后点击 Options... 选项，选择 Exclude from build 排除编译。
 
 * /board/display_support.c 与 .h 文件
 * /board/vglite_support.c 与 .h 文件
@@ -180,7 +176,7 @@ void rt_hw_board_init() {
 
 #### rt_hw_console_output() 实现
 
-RT-Thread 使用 `rt_kprintf()` 调用 `rt_hw_console_output()` 函数打印输出，此函数位于工程 /rtthread/kservice.c 文件中，需要自己实现。可以直接 include 原工程 /utilities/fsl_debug_console.h 文件, 使用 `PRINTF` 宏输出。不过打印已以 '\n' 结尾，故还需输出 '\r'，以完成回车与换行。实现后的函数如下：
+RT-Thread 使用 `rt_kprintf()` 调用 `rt_hw_console_output()` 函数打印输出，此函数位于工程 /rtthread/kservice.c 文件中，需要自己实现。可以直接包含原工程 /utilities/fsl_debug_console.h 文件, 使用 `PRINTF` 宏输出。不过打印已以 '\n' 结尾，故还需输出 '\r'，以完成回车与换行。实现后的函数如下：
 
 ``` C
 #include <fsl_debug_console.h>
@@ -231,7 +227,7 @@ IAR 中右键工程名点击 Options... 选项，添加 finsh 文件夹路径。
 
 #### 使能 Finsh
 
-在 rtconfig.h 中 include 添加的 Finsh 头文件：
+在 rtconfig.h 中包含添加的 Finsh 头文件：
 
 ``` C
 #include "finsh_config.h"
