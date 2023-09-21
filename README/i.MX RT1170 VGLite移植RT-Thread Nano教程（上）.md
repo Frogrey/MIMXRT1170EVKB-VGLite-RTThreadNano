@@ -4,7 +4,7 @@ RT-Thread 是国人自主研发的开源实时操作系统（ RTOS ），RT-Thre
 
 文章分为上、下两篇，将手把手教您移植 VGLite 到 RT-Thread Nano。上篇对 RT-Thread Nano 内核与 Finsh 组件进行移植，下篇则教您如何改写官方 SDK 中 VGLite example 的代码，使其从原有的 FreeRTOS 适配到 RT-Thread Nano 中。
 
-文章所做的工作已上传至 Github ，欢迎有兴趣的读者学习交流！
+文章所做的工作已上传至 [Github](https://github.com/Frogrey/MIMXRT1170EVKB-VGLite-RTThreadNano.git) ，欢迎有兴趣的读者学习交流！
 
 ## 硬件准备
 
