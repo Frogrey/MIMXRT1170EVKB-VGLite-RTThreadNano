@@ -379,3 +379,4 @@ VGLite 移植到 RT-Thread Nano 的过程还是有些繁琐的，需要更改的
 * https://www.rt-thread.org/document/site/#/rt-thread-version/rt-thread-standard/programming-manual/basic/basic
 * https://freertos.org/zh-cn-cmn-s/FreeRTOS-quick-start-guide.html
 * https://freertos.org/fr-content-src/uploads/2018/07/161204_Mastering_the_FreeRTOS_Real_Time_Kernel-A_Hands-On_Tutorial_Guide.pdf
+* https://www.nxp.com/docs/en/user-guide/IMXRTVGLITEPG.pdf
